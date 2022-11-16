@@ -1,7 +1,12 @@
 import { createApp } from "vue"
+import router from './router'
 import "./style.css"
 import App from "./App.vue"
+
 import Antd from "ant-design-vue"
+import { message } from "ant-design-vue"
 import "ant-design-vue/dist/antd.css"
 
-createApp(App).use(Antd).mount("#app")
+window.$message = message
+
+createApp(App).use(router).use(Antd).mount("#app")
