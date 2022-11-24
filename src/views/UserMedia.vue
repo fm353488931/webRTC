@@ -33,15 +33,23 @@
           >开始录制</a-button
         >
         <a-button type="primary" v-if="isRecording" @click="stopRecord"
-          >结束录制（{{ seconds }}）</a-button
+          >结束录制（{{ seconds }}s）</a-button
         >
       </a-space>
     </a-form>
+    <div class="UserMedia_images">
+      <div class="image" v-for="(item, index) in imgList" :key="index">
+        <img :src="item" alt="" />
+        <download-outlined class="download" @click="downloadImage(item)" />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue"
+import { DownloadOutlined } from "@ant-design/icons-vue"
+
 const localVideo = ref(null)
 const screenVideo = ref(null)
 // 获取本地音视频流
@@ -85,7 +93,7 @@ getDevices()
 
 //打开摄像头
 const changeVideoDevice = () => {
-  const deviceId = videoDevices[0].deviceId
+  const deviceId = videoDevices.value[0].deviceId
   currentDeviceId.value = deviceId
   changeDevice(deviceId)
 }
@@ -111,26 +119,6 @@ const takePhoto = () => {
   const ctx = canvas.getContext("2d")
   ctx.drawImage(localVideo.value, 0, 0, canvas.width, canvas.height)
   imgList.value.push(canvas.toDataURL("image/png"))
-  console.log(imgList.value)
-  //添加滤镜
-  // const filterList = [
-  //   "blur(5px)", // 模糊
-  //   "brightness(0.5)", // 亮度
-  //   "contrast(200%)", // 对比度
-  //   "grayscale(100%)", // 灰度
-  //   "hue-rotate(90deg)", // 色相旋转
-  //   "invert(100%)", // 反色
-  //   "opacity(90%)", // 透明度
-  //   "saturate(200%)", // 饱和度
-  //   "saturate(20%)", // 饱和度
-  //   "sepia(100%)", // 褐色
-  //   "drop-shadow(4px 4px 8px blue)", // 阴影
-  // ]
-  // for (let i = 0; i < filterList.length; i++) {
-  //   ctx.filter = filterList[i]
-  //   ctx.drawImage(localVideo.value, 0, 0, canvas.width, canvas.height)
-  //   imgList.value.push(canvas.toDataURL("image/png"))
-  // }
 }
 
 // 获取支持的媒体类型
@@ -185,7 +173,7 @@ const startRecord = () => {
   const options = {
     audioBitsPerSecond: 128000,
     videoBitsPerSecond: 2500000,
-    mimeType: 'video/webm; codecs="vp8,opus"',
+    mimeType: currentMimeType.value,
   }
   mediaRecorder = new MediaRecorder(screenVideo.value.srcObject, options)
   mediaRecorder.start()
@@ -226,13 +214,63 @@ const downloadBlob = (blob) => {
   // 释放 URL 地址
   URL.revokeObjectURL(url)
 }
+
+// Base64 to Blob
+const dataURLtoBlob = (dataurl) => {
+  var arr = dataurl.split(","),
+    mime = arr[0].match(/:(.*?);/)[1],
+    bstr = atob(arr[1]),
+    n = bstr.length,
+    u8arr = new Uint8Array(n)
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n)
+  }
+  return new Blob([u8arr], { type: mime })
+}
+//下载base64
+const downloadImage = (base64) => {
+  // const a = document.createElement("a")
+  // a.href = base64
+  // a.download = `photo${new Date().getTime()}.png`
+  // a.click()
+  const blob = dataURLtoBlob(base64)
+  downloadBlob(blob)
+}
 </script>
 
 <style scoped lang="less">
 .UserMedia {
+  background-color: aliceblue;
   video {
     width: 640px;
     height: 360px;
+  }
+  &_images {
+    display: flex;
+    flex-wrap: wrap;
+    .image {
+      position: relative;
+      margin-right: 20px;
+      width: 320px;
+      height: 180px;
+      img {
+        width: 100%;
+        height: 100%;
+      }
+      .download {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        width: 30px;
+        height: 30px;
+        background-color: #fff;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+    }
   }
 }
 </style>
